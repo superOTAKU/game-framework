@@ -34,17 +34,28 @@ public class SqlExecutor {
     //类元信息缓存
     private final ConcurrentMap<Class<?>, ClassMeta> classMetaCache = new ConcurrentHashMap<>();
 
-    public int executeUpdate(String sql, Object[] args) {
-
-        return 0;
+    public int executeUpdate(String sql, Object[] args) throws SQLException {
+        PreparedStatement pStmt = null;
+        try {
+            pStmt = writeConn.prepareStatement(sql);
+            int i = 1;
+            for (var arg : args) {
+                pStmt.setObject(i++, arg);
+            }
+            return pStmt.executeUpdate();
+        } finally {
+            IoUtil.close(pStmt);
+        }
     }
 
     public <T> List<T> executeQuery(Class<T> entityType, String whereClause, Object[] args) throws SQLException {
+        Connection conn = null;
         PreparedStatement pStmt = null;
         ResultSet rs = null;
         try {
+            conn = readDataSource.getConnection();
             ClassMeta classMeta = getClassMeta(entityType);
-            pStmt = writeConn.prepareStatement(classMeta.getQuerySql() + " " + whereClause);
+            pStmt = conn.prepareStatement(classMeta.getQuerySql() + " " + whereClause);
             for (int i = 1; i <= args.length; i++) {
                 pStmt.setObject(i, args[i]);
             }
@@ -62,6 +73,7 @@ public class SqlExecutor {
         } finally {
             IoUtil.close(rs);
             IoUtil.close(pStmt);
+            IoUtil.close(conn);
         }
     }
 
