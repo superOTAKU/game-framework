@@ -2,6 +2,7 @@ package org.summer.db;
 
 import lombok.Data;
 
+import java.lang.reflect.Method;
 import java.util.List;
 
 /**
@@ -11,5 +12,6 @@ import java.util.List;
 public class ClassMeta {
     private String name;
     private List<String> fieldNames;
+    private List<Method> setters;
     private String querySql;
 }
